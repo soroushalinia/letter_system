@@ -24,7 +24,13 @@ const FileUpload = new EntitySchema({
   relations: {
     user: {
       type: 'many-to-one',
-      target: 'User',
+      target: User,
+      joinColumn: true,
+      onDelete: 'CASCADE'
+    },
+    recipient: {
+      type: 'many-to-one',
+      target: User,
       joinColumn: true,
       onDelete: 'CASCADE'
     }
