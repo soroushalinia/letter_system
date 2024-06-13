@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: letter_system
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+    command: server /data
+
+  mc:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 20;
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/mybucket;
+      mc policy set public myminio/mybucket;
+      "
+
+  backend:
+    build: .
+    container_name: backend
+    environment:
+      PORT: 4000
+      SESSION_SECRET: your_session_secret
+      TYPEORM_CONNECTION: postgres
+      TYPEORM_HOST: db
+      TYPEORM_USERNAME: postgres
+      TYPEORM_PASSWORD: root
+      TYPEORM_DATABASE: letter_system
+      TYPEORM_PORT: 5432
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: mybucket
+    volumes:
+      - .:/app
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+      - minio
+      - mc
+
+volumes:
+  postgres_data:
+  minio_data:
