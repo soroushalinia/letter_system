@@ -45,8 +45,8 @@ services:
       SESSION_SECRET: your_session_secret
       TYPEORM_CONNECTION: postgres
       TYPEORM_HOST: db
-      TYPEORM_USERNAME: postgres
-      TYPEORM_PASSWORD: root
+      TYPEORM_USERNAME: soroush
+      TYPEORM_PASSWORD: 123456
       TYPEORM_DATABASE: letter_system
       TYPEORM_PORT: 5432
       MINIO_ENDPOINT: minio

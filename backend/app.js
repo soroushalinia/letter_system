@@ -12,7 +12,10 @@ const multer = require('multer');
 const minioClient = require('./minio'); 
 const fs = require('fs');
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
@@ -230,8 +233,8 @@ const AppDataSource = new DataSource({
     type: 'postgres',
     host: 'localhost',
     port: 5432,
-    username: 'postgres',
-    password: 'root',
+    username: 'soroush',
+    password: '123456',
     database: 'letter_system',
     entities: [User,FileUpload],
     synchronize: true,
