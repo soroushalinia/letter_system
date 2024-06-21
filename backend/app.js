@@ -112,8 +112,89 @@ app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error });
   }
 });
+// app.put('/update-pdf/:filename', upload.single('pdf'), async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({ message: 'No file uploaded' });
+//     }
 
-  
+//     const user = req.session.user;
+//     if (!user) {
+//       return res.status(401).json({ message: 'Unauthorized' });
+//     }
+
+//     const { filename } = req.params;
+
+//     const fileRepository = AppDataSource.getRepository(FileUpload);
+//     const fileRecord = await fileRepository.findOne({ where: { filename, user: user }, relations: ['user', 'recipient'] });
+//     if (!fileRecord) {
+//       return res.status(404).json({ message: 'File not found or you do not have permission to update this file' });
+//     }
+
+//     const bucketName = 'mybucket';
+//     const fileBuffer = req.file.buffer;
+
+//     const bucketExists = await minioClient.bucketExists(bucketName);
+//     if (!bucketExists) {
+//       return res.status(500).json({ message: 'Bucket does not exist' });
+//     }
+
+//     await minioClient.putObject(bucketName, filename, fileBuffer);
+//     console.log(`File ${filename} updated in MinIO`);
+
+//     fileRecord.uploadedAt = new Date();
+//     await fileRepository.save(fileRecord);
+//     console.log(`File metadata for ${filename} updated in the database`);
+
+//     res.json({ message: 'File updated successfully', filename });
+//   } catch (error) {
+//     console.error('Error updating file:', error);
+//     res.status(500).json({ message: 'Internal Server Error', error });
+//   }
+// });
+
+app.put('/update-pdf/:filename', upload.single('pdf'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const user = req.session.user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Decode the filename parameter to handle spaces and special characters
+    const filename = decodeURIComponent(req.params.filename);
+
+    const fileRepository = AppDataSource.getRepository(FileUpload);
+    const fileRecord = await fileRepository.findOne({ where: { filename, user: user }, relations: ['user', 'recipient'] });
+    if (!fileRecord) {
+      return res.status(404).json({ message: 'File not found or you do not have permission to update this file' });
+    }
+
+    const bucketName = 'mybucket';
+    const fileBuffer = req.file.buffer;
+
+    const bucketExists = await minioClient.bucketExists(bucketName);
+    if (!bucketExists) {
+      return res.status(500).json({ message: 'Bucket does not exist' });
+    }
+
+    await minioClient.putObject(bucketName, filename, fileBuffer);
+    console.log(`File ${filename} updated in MinIO`);
+
+    fileRecord.uploadedAt = new Date();
+    await fileRepository.save(fileRecord);
+    console.log(`File metadata for ${filename} updated in the database`);
+
+    res.json({ message: 'File updated successfully', filename });
+  } catch (error) {
+    console.error('Error updating file:', error);
+    res.status(500).json({ message: 'Internal Server Error', error });
+  }
+});
+
 
 app.get('/my-sent-pdfs', authenticate, async (req, res) => {
     try {
@@ -136,6 +217,7 @@ app.get('/my-sent-pdfs', authenticate, async (req, res) => {
           role: file.user.role
         },
         sendedTo: file.recipient ? {
+          //recipient
         //   id: file.recipient.id,
           username: file.recipient.username
         } : null
@@ -148,6 +230,76 @@ app.get('/my-sent-pdfs', authenticate, async (req, res) => {
     }
   });
   
+ // Download PDF route
+
+ app.get('/download-pdf/:filename', async (req, res) => {
+  try {
+    // Decode the filename parameter to handle spaces and special characters
+    const filename = decodeURIComponent(req.params.filename);
+
+    const fileRepository = AppDataSource.getRepository(FileUpload);
+    const fileRecord = await fileRepository.findOne({ where: { filename } });
+    if (!fileRecord) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    const bucketName = 'mybucket';
+
+    const object = await minioClient.getObject(bucketName, filename);
+    console.log(`File ${filename} fetched from MinIO`);
+
+    const encodedFilename = encodeURIComponent(filename);
+
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Content-Type', 'application/pdf');
+
+    object.pipe(res);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ message: 'Internal Server Error', error });
+  }
+});
+// app.get('/download-pdf/:filename', authenticate, async (req, res) => {
+//   try {
+//     const user = req.session.user;
+//     if (!user) {
+//       return res.status(401).json({ message: 'Unauthorized' });
+//     }
+
+//     const { filename } = req.params;
+//     if (!filename) {
+//       return res.status(400).json({ message: 'Filename is required' });
+//     }
+
+//     const fileRepository = AppDataSource.getRepository(FileUpload);
+//     const fileRecord = await fileRepository.findOne({ where: { filename, user: user }, relations: ['user', 'recipient'] });
+//     if (!fileRecord) {
+//       return res.status(404).json({ message: 'File not found or you do not have permission to download this file' });
+//     }
+
+//     const bucketName = 'mybucket';
+
+//     // Check if the bucket exists
+//     const bucketExists = await minioClient.bucketExists(bucketName);
+//     if (!bucketExists) {
+//       return res.status(500).json({ message: 'Bucket does not exist' });
+//     }
+
+//     // Fetch the file from MinIO storage
+//     const fileStream = await minioClient.getObject(bucketName, filename);
+//     console.log(`File ${filename} fetched from MinIO`);
+
+//     // Set the headers to indicate a file download
+//     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+//     res.setHeader('Content-Type', 'application/pdf');
+
+//     // Pipe the file stream to the response
+//     fileStream.pipe(res);
+//   } catch (error) {
+//     console.error('Error downloading file:', error);
+//     res.status(500).json({ message: 'Internal Server Error', error });
+//   }
+// });
 
   app.get('/myprofile', authenticate, async (req, res) => {
     try {
