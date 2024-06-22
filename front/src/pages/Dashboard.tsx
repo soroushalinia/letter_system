@@ -12,6 +12,7 @@ import { ChangeEvent, useState } from "react";
 import Alert from "../components/Alert";
 import axios from "axios";
 import LetterView from "../components/dashboard/LetterView";
+import LetterReceived from "../components/dashboard/LetterReceived";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -43,30 +44,28 @@ export default function Dashboard() {
       setError([true, "نام کاربری صحیح نیست"]);
     } else if (selectedFile === null) {
       setError([true, "فایلی انتخاب نشده است"]);
-    } else if (signature === null) {
-      setError([true, "امضا ثبت نشده است"]);
     } else {
       const pdfArrayBuffer = (await selectedFile?.arrayBuffer()) as ArrayBuffer;
-      const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
-      const pages = pdfDoc.getPages();
-      const firstPage = pages[0];
-      const { width, } = firstPage.getSize();
-      const padding = 50;
-      const imageWidth = 100;
-      const imageHeight = 50;
-      const x = width - imageWidth - padding;
-      const y = padding;
-      const pngImage = await pdfDoc.embedPng(signature);
-      firstPage.drawImage(pngImage, {
-        x,
-        y,
-        width: imageWidth,
-        height: imageHeight,
-      });
-      const pdfBytes = await pdfDoc.save();
-      const dataBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+      // const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
+      // const pages = pdfDoc.getPages();
+      // const firstPage = pages[0];
+      // const { width, } = firstPage.getSize();
+      // const padding = 50;
+      // const imageWidth = 100;
+      // const imageHeight = 50;
+      // const x = width - imageWidth - padding;
+      // const y = padding;
+      // const pngImage = await pdfDoc.embedPng(signature);
+      // firstPage.drawImage(pngImage, {
+      //   x,
+      //   y,
+      //   width: imageWidth,
+      //   height: imageHeight,
+      // });
+      // const pdfBytes = await pdfDoc.save();
+      const dataBlob = new Blob([pdfArrayBuffer], { type: 'application/pdf' });
       const formData = new FormData();
-      formData.append('pdf', dataBlob, selectedFile.name);
+      formData.append('pdf', dataBlob , selectedFile.name);
       formData.append('recipientUsername', username)
       try {
         const response = await axios.post('http://localhost:4000/upload-pdf', formData, {
@@ -125,7 +124,7 @@ export default function Dashboard() {
             </div>
 
             <FileUpload onFileChange={handleFileChange}></FileUpload>
-            <Signature onSignatureChange={handleSignatureChange}></Signature>
+            <br />
             <button
               onClick={submit}
               className="bg-green-400 rounded-lg p-2 text-white"
@@ -134,6 +133,13 @@ export default function Dashboard() {
             </button>
           </div>
           <hr />
+          <h3 className="text-xl font-semibold">نامه های دریافتی</h3>
+          <div>
+            <LetterReceived></LetterReceived>
+          </div>
+          <br />
+          <br />
+          {/* <hr /> */}
           <h3 className="text-xl font-semibold">نامه های ارسالی</h3>
           <div>
             <LetterView></LetterView>

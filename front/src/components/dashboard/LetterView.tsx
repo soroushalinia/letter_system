@@ -63,12 +63,12 @@ function LetterView() {
             <tr key={index} className="text-center">
               <td className="py-2 px-4 border-b">{index + 1}</td>
               <td className="py-2 px-4 border-b break-words break-all">
-                <a href={`http://localhost:4000${letter.filePath}`}>
+                <a href={`http://localhost:4000/download-pdf/${letter.filename}`}>
                   {letter.filename}
                 </a>
               </td>
-              <td className="py-2 px-4 border-b">{letter.sender.username}</td>
-              <td className="py-2 px-4 border-b">{letter.sendedTo.username}</td>
+              <td className="py-2 px-4 border-b">{letter.sender === null ? "" : letter.sender.username}</td>
+              <td className="py-2 px-4 border-b">{letter.sendedTo === null ? "" : letter.sendedTo.username}</td>
               <td className="py-2 px-4 border-b">
                 {formatDateToLocalTime(letter.uploadedAt)}
               </td>

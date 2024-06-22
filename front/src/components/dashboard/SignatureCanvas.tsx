@@ -1,14 +1,13 @@
 import { useRef } from "react";
 //@ts-expect-error For some reason jreact-signature-canvas is not detected whilist its working and installed
 import SignatureCanvas from "react-signature-canvas";
-import { SignatureProps } from "../../types";
 
-function Signature({ onSignatureChange }: SignatureProps) {
+function Signature({file, name}: SignatureCanvas) {
   const sigCanvas = useRef({});
-  const saveData: () => void = () => {
+  const saveData: () => void = async () => {
     //@ts-expect-error type error
     const data = sigCanvas.current.getTrimmedCanvas().toDataURL("image/png");
-    onSignatureChange(data);
+    
   };
   const clearData: () => void = () => {
     //@ts-expect-error type error

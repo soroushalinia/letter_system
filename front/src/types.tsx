@@ -13,5 +13,6 @@ export interface FileUploadProps {
 }
 
 export interface SignatureProps {
-  onSignatureChange: (data: string) => void;
+  file: File;
+  name: string;
 }
