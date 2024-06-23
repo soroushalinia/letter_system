@@ -17,6 +17,11 @@ function Admin() {
   const [history, setHistory] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState<[boolean, string]>([false, ""]);
+  const [filter, setFilter] = useState<string>("");
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value);
+  };
 
   async function getUsers() {
     try {
@@ -37,7 +42,13 @@ function Admin() {
     try {
       const response = await axios.get("http://localhost:4000/files");
       if (response.status === 200) {
-        return response.data.files;
+        if (filter === "") {
+          return response.data.files;
+        } else {
+          const filteredResponse = response.data.files.filter((file) => file.filename === filter)
+          return filteredResponse;
+        }
+        
       } else {
         setError([true, `خطا در دریافت: ${response.status} ${response.data}`]);
         return null;
@@ -77,6 +88,11 @@ function Admin() {
         {error[0] === true ? <Alert type="error" msg={error[1]}></Alert> : null}
         <br />
         <h3 className="text-xl font-semibold">لیست نامه ها</h3>
+        <br />
+        <div className="w-full flex flex-row">
+          <input className="border border-gray-300 rounded-2xl p-2 focus:outline-none w-full" value={filter} onChange={handleChange} placeholder="جستجوی نامه" type="text" />
+        </div>
+        <br />
         <table className="min-w-full bg-white">
           <thead>
             <tr>
