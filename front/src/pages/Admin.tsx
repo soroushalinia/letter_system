@@ -62,7 +62,7 @@ function Admin() {
   useEffect(() => {
     getFiles().then((res) => setHistory(res));
     getUsers().then((res) => setUsers(res));
-  }, []);
+  });
 
   const user = Cookies.get("user");
   if (user === undefined) {
@@ -104,7 +104,7 @@ function Admin() {
             </tr>
           </thead>
           <tbody>
-            {history.map((file, index) => (
+            {history !== null ?  history.map((file, index) => (
               <tr key={index} className="text-center">
                 <td className="py-2 px-4 border-b">{index + 1}</td>
                 <td className="py-2 px-4 border-b break-words break-all">
@@ -122,7 +122,7 @@ function Admin() {
                   {formatDateToLocalTime(file.uploadedAt)}
                 </td>
               </tr>
-            ))}
+            )) : <></>}
           </tbody>
         </table>
         <br />
