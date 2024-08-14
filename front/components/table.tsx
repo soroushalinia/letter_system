@@ -24,6 +24,7 @@ import { Toaster } from "@/components/ui/toaster";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import moment from "moment-timezone";
+import jalaali from "jalaali-js";
 
 import {
   Table,
@@ -35,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { roleTranslate } from "@/lib/utils";
 
 export default function TableView() {
   const { toast } = useToast();
@@ -47,6 +49,10 @@ export default function TableView() {
   const [uswitch, setUswitch] = useState("R");
   const [adminInfo, setAdminInfo] = useState(false);
   const [aswitch, setAswitch] = useState("U");
+  const [recipient, setRecipient] = useState("");
+  const [usersListState, setUserListState] = useState([]);
+  const [orgRoleTag, setOrgRoleTag] = useState("");
+  const [filter, setFilter] = useState("");
 
   const columns = [
     {
@@ -64,11 +70,11 @@ export default function TableView() {
       cell: (row) => {
         return (
           <a href={`http://localhost:4000/download-pdf/${row.filename}`}>
-            ... {row.filename.slice(0, 75)}
+            {row.filename.slice(0, 45)}
           </a>
         );
       },
-      width: "600px",
+      width: "300px",
     },
     {
       name: "تاریخ",
@@ -80,24 +86,55 @@ export default function TableView() {
       sortable: true,
       //@ts-ignore
       format: (row) => {
-        const formattedDate = moment(row.uploadedAt)
+        const dateObj = new Date(row.uploadedAt);
+        const date = jalaali.toJalaali(dateObj);
+        const fmtTime = moment(row.uploadedAt)
           .tz("Asia/Tehran")
-          .format("YYYY-MM-DD HH:mm:ss");
-        return formattedDate;
+          .format("HH:mm:ss");
+        return `${fmtTime} - ${date.jy}/${date.jm}/${date.jd}`;
       },
       maxWidth: "300px",
+    },
+    {
+      name: "شرح",
+      selector: (row) => row.description,
     },
     {
       name: "فرستنده",
       //@ts-ignore
       selector: (row) => row.sender.username,
       maxWidth: "300px",
+      cell: (row) => {
+        return (
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <p>{row.sender.username}</p>
+            {row.sender.Organizational_role === undefined ? (
+              <></>
+            ) : (
+              <Badge>{roleTranslate(row.sender.Organizational_role)}</Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       name: "گیرنده",
       //@ts-ignore
       selector: (row) => row.sendedTo.username,
       maxWidth: "300px",
+      //@ts-ignore
+      cell: (row) => {
+        return (
+          <div className="flex flex-row gap-4 justify-center items-center">
+            <p>{row.sendedTo.username}</p>
+            {row.sendedTo.Organizational_role === undefined ? (
+              <></>
+            ) : (
+              <Badge>{roleTranslate(row.sendedTo.Organizational_role)}</Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       name: "امضا",
@@ -140,7 +177,44 @@ export default function TableView() {
               </DialogContent>
             </Dialog>
 
-            <Button className="bg-red-500 hover:bg-red-800">حذف</Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const deleteFileResult = await axios.delete(
+                    `http://localhost:4000/delete-pdf/${row.filename}`
+                  );
+                  if (deleteFileResult.status === 401) {
+                    toast({
+                      title: "خطا",
+                      description:
+                        "نشست شما منقضی شده است. لطفا دوباره وارد شوید",
+                    });
+                  } else if (deleteFileResult.status === 404) {
+                    toast({
+                      title: "خطا",
+                      description: "فایل درخواستی وجود ندارد",
+                    });
+                  } else if (deleteFileResult.status === 200) {
+                    toast({
+                      title: "موفقیت",
+                      description: "فایل حذف شد",
+                    });
+                    router.push("/");
+                    router.refresh();
+                    location.reload();
+                  }
+                } catch (err) {
+                  toast({
+                    title: "خطا",
+                    description:
+                      "اتصال با سرور برقرار نشد. اینترنت خود را چک کنید",
+                  });
+                }
+              }}
+              className="bg-red-500 hover:bg-red-800"
+            >
+              حذف
+            </Button>
           </div>
         );
       },
@@ -182,7 +256,7 @@ export default function TableView() {
     const formData = new FormData();
     formData.append("pdf", dataBlob, filename);
     try {
-        console.log("http://localhost:4000/update-pdf/" + filename)
+      console.log("http://localhost:4000/update-pdf/" + filename);
       const response = await axios.put(
         "http://localhost:4000/update-pdf/" + filename,
         formData,
@@ -215,6 +289,9 @@ export default function TableView() {
     const fetchData = async () => {
       let url = "";
       try {
+        const usersList = await axios.get("http://localhost:4000/users");
+        // console.log(usersList)
+        setUserListState(usersList.data.users);
         if (uswitch === "R") {
           const res = await axios.get("http://localhost:4000/received-pdfs");
           //   console.log("R USEEFFECT");
@@ -223,6 +300,7 @@ export default function TableView() {
             return { ...item, index: index + 1 };
           });
           setLetterData(indexedRes);
+          console.log(indexedRes);
         }
         if (uswitch === "S") {
           const res = await axios.get("http://localhost:4000/my-sent-pdfs");
@@ -232,6 +310,7 @@ export default function TableView() {
             return { ...item, index: index + 1 };
           });
           setLetterData(indexedRes);
+          console.log(indexedRes);
         }
       } catch (err) {
         toast({
@@ -272,6 +351,7 @@ export default function TableView() {
     const formData = new FormData(form);
     const recipientUsername = formData.get("recipientUsername") as string;
     const pdf = formData.get("pdf") as string;
+    const description = formData.get("description") as string;
     try {
       const response = await axios.post(
         "http://localhost:4000/upload-pdf",
@@ -335,11 +415,46 @@ export default function TableView() {
                         گیرنده
                       </Label>
                       <Input
+                        value={recipient}
+                        onChange={(event) => {
+                          setRecipient(event.target.value);
+                          const namelist = usersListState.map(
+                            (user) => user.username
+                          );
+                          const idx = namelist.indexOf(event.target.value);
+                          if (idx != -1) {
+                            setOrgRoleTag(
+                              usersListState[idx].Organizational_role
+                            );
+                          } else {
+                            setOrgRoleTag("");
+                          }
+                        }}
                         name="recipientUsername"
                         id="recipientUsername"
                         className="col-span-3"
                       />
+                      {orgRoleTag === "" ? (
+                        <></>
+                      ) : (
+                        <>
+                          <p>نقش گیرنده:</p>
+                          <Badge className="text-center flex flex-row justify-center">
+                            {roleTranslate(orgRoleTag)}
+                          </Badge>
+                        </>
+                      )}
                     </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="description">شرح نامه</Label>
+                      <Input
+                        name="description"
+                        id="description"
+                        placeholder="شرح نامه"
+                        className="col-span-3"
+                      />
+                    </div>
+
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="file" className="text-right">
                         فایل نامه
@@ -375,6 +490,15 @@ export default function TableView() {
               ) : (
                 <></>
               )}
+              <Input
+                className=""
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                type="text"
+                name=""
+                id=""
+                placeholder="جستجوی نامه"
+              />
             </>
           ) : (
             <></>
@@ -391,7 +515,11 @@ export default function TableView() {
       </div>
 
       {adminInfo === false ? (
-        <DataTable theme="default" columns={columns} data={letterData} />
+        <DataTable
+          theme="default"
+          columns={columns}
+          data={letterData.filter((row) => row.description.includes(filter))}
+        />
       ) : (
         <div className="">
           <Button

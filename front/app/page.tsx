@@ -50,6 +50,7 @@ export default function Home() {
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
     const role = formData.get("role") as string;
+    const Organizational_role = formData.get("Organizational_role") as string;
 
     if (login) {
       if (username === "" || password === "") {
@@ -104,6 +105,7 @@ export default function Home() {
               username,
               password,
               role,
+              Organizational_role
             },
             { withCredentials: true }
           );
@@ -187,16 +189,34 @@ export default function Home() {
             {login ? (
               <></>
             ) : (
-              <Select name="role">
-                <SelectTrigger className="">
-                  <SelectValue id="role" placeholder="نقش" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">کاربر عادی</SelectItem>
-                  <SelectItem value="admin">ادمین</SelectItem>
-                  <SelectItem value="superadmin">سوپر ادمین</SelectItem>
-                </SelectContent>
-              </Select>
+              <>
+                <Select name="role">
+                  <SelectTrigger className="">
+                    <SelectValue id="role" placeholder="نقش" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">کاربر عادی</SelectItem>
+                    <SelectItem value="admin">ادمین</SelectItem>
+                    <SelectItem value="superadmin">سوپر ادمین</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select name="Organizational_role">
+                  <SelectTrigger className="">
+                    <SelectValue id="Organizational_role" placeholder="نقش سازمانی" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="modir_kol">مدیر کل</SelectItem>
+                    <SelectItem value="modir_arshad">مدیر ارشد</SelectItem>
+                    <SelectItem value="modir">مدیر</SelectItem>
+                    <SelectItem value="karmand">کارمند</SelectItem>
+                    <SelectItem value="bazras">بازرس</SelectItem>
+                    <SelectItem value="nameh_resan">نامه رسان</SelectItem>
+                    <SelectItem value="herasat">حراست</SelectItem>
+                    <SelectItem value="negahban">نگهبان</SelectItem>
+                    <SelectItem value="no_role">بدون نقش</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
             )}
 
             {login ? (
