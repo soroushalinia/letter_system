@@ -13,6 +13,9 @@ const FileUpload = new EntitySchema({
     filename: {
       type: 'varchar'
     },
+    description: {
+      type: 'varchar'
+    },
     filePath: {
       type: 'varchar'
     },

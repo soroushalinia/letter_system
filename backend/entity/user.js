@@ -1,5 +1,3 @@
-// entity/User.js
-
 const { EntitySchema } = require('typeorm');
 const bcrypt = require('bcryptjs');
 
@@ -9,14 +7,31 @@ const RoleEnum = {
   CLIENT: "client"
 };
 
+const OrganizationRoleEnum = {
+  MoDIR_KOL: "modir_kol",
+  MODIR_ARSHAD: "modir_arshad",
+  MODIR: "modir",
+  KARMAND: "karmand",
+  BAZRAS: "bazras",
+  NAMEH_RESAN: "nameh_resan",
+  HERASAT: "herasat",
+  NEGAHBAN: "negahban",
+  NO_ROL: "no_role"
+};
+
 const User = new EntitySchema({
   name: 'User',
-  tableName: 'users', // Optional: define table name explicitly
+  tableName: 'users',
   columns: {
     id: {
       type: 'int',
       primary: true,
       generated: true
+    },
+    Organizational_role: {
+      type: 'enum',
+      enum: OrganizationRoleEnum,
+      default: OrganizationRoleEnum.NO_ROL
     },
     role: {
       type: 'enum',
@@ -41,4 +56,4 @@ const User = new EntitySchema({
   }
 });
 
-module.exports = { User, RoleEnum };
+module.exports = { User, RoleEnum, OrganizationRoleEnum };

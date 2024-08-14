@@ -5,8 +5,8 @@ const minioClient = new Minio.Client({
   endPoint: 'localhost',
   port: 9000, // typically 9000 for MinIO
   useSSL: false, // true if your MinIO server uses SSL
-  accessKey: 'ID2FX44894f0jXIRmm4b',
-  secretKey: 'nOxq0PeKDtySyEBLAFxt17pZvWdxUp0HLiX89mIS'
+  accessKey: 'LgFmDjeZGZSPxhSxahdd',
+  secretKey: 'pLjVHO5a2mXkbp5FF41BIAk4VDAplT7aOXGuh7qq'
 });
 
 module.exports = minioClient;
